@@ -1,0 +1,10 @@
+{
+    "sourceDir": "src",
+    "outDir": "dist",
+    "entry": "index.js",
+    "outFile": "zlink.js",
+    "types": [
+        ".js"
+    ],
+    "minify": false
+}

@@ -1,0 +1,120 @@
+<?php
+echo "\n";
+
+function escape(string $msg = "")
+{
+    echo "$msg\n";
+    exit;
+}
+function parseArgs($argv)
+{
+
+    $phpCompilerConfig = file_get_contents("pgconfig.json");
+
+    $config = json_decode($phpCompilerConfig);
+    foreach ($argv as $v) {
+        switch ($v) {
+            case '--min':
+                $config->minify = true;
+                break;
+            case '--help':
+                echo "Usage: php minify [--min] [--help]\n";
+                echo "--min: minify the files\n";
+                echo "--help: display this help\n";
+                escape();
+        }
+    }
+    return $config;
+}
+function clean(string $dir)
+{
+    $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
+    $files = new RecursiveIteratorIterator(
+        $it,
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($files as $file) {
+        if ($file->isDir()) {
+            rmdir($file->getRealPath());
+        } else {
+            unlink($file->getRealPath());
+        }
+    }
+    rmdir($dir);
+}
+function closure(string $code, string $output)
+{
+    $closureUrl = "https://closure-compiler.appspot.com/compile";
+    $data = [
+        'js_code' => $code,
+        'compilation_level' => 'WHITESPACE_ONLY',
+        'output_format' => 'json',
+        'output_info' => $output
+    ];
+
+    $curl = curl_init($closureUrl);
+
+    curl_setopt($curl, CURLOPT_URL, $closureUrl);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+        'Content-Type: application/x-www-form-urlencoded'
+    ));
+    curl_setopt($curl, CURLOPT_POST, true);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
+
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+
+    return curl_exec($curl);
+    // curl_close($curl);
+}
+
+
+$config = parseArgs($argv);
+
+$sourceDir = __dir__ . DIRECTORY_SEPARATOR . $config->sourceDir;
+$outDir = __dir__ . DIRECTORY_SEPARATOR . $config->outDir;
+$outFile = __dir__ . DIRECTORY_SEPARATOR . $config->outDir . DIRECTORY_SEPARATOR . $config->outFile;
+$entryJs = $config->entry;
+
+$minify = $config->minify;
+
+
+if (file_exists($outDir)) {
+    clean($outDir);
+}
+mkdir($outDir, 0777, true);
+// clear output file
+file_put_contents($outFile, "");
+
+echo 'source directory: ' . $sourceDir;
+
+$files = scandir($sourceDir);
+
+echo "\n\nwriting to $outFile";
+foreach ($files as $file) {
+    if (strpos($file, '.js') !== false) {
+        echo "\nreading " . $file . "\n";
+        if ($file != $entryJs) {
+            $js = file_get_contents($sourceDir . DIRECTORY_SEPARATOR . $file);
+            file_put_contents($outFile, $js . "\n", FILE_APPEND);
+        }
+    }
+}
+file_put_contents($outFile, file_get_contents($sourceDir . DIRECTORY_SEPARATOR . $entryJs) . "\n", FILE_APPEND);
+
+echo "\n\nmerge to $outFile\n";
+
+echo "\ncompiling...";
+$js = (file_get_contents($outFile));
+
+if ($minify) {
+    $minOut = explode(".", $config->outFile)[0] . '.min.' . explode(".", $config->outFile)[1];
+
+    $minOutFile = __dir__ . DIRECTORY_SEPARATOR . $config->outDir . DIRECTORY_SEPARATOR . $minOut;
+    echo "\nminifying $minOut\n";
+
+    $uncompressed = (file_get_contents($outFile));
+
+    $result = closure($uncompressed, "compiled_code");
+
+    file_put_contents($minOutFile, json_decode($result)->compiledCode);
+}
