@@ -1,4 +1,4 @@
-# 🚀 Welcome to Zlink!
+# 🚀 Welcome to Zlink
 
 This project has been created using **php**, you can run
 
