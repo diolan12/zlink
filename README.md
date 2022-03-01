@@ -1,15 +1,15 @@
-# 🚀 Welcome to your new awesome project!
+# 🚀 Welcome to Zlink!
 
-This project has been created using **webpack-cli**, you can now run
+This project has been created using **php**, you can run
 
-```
-npm run build
+```terminal
+php pherger
 ```
 
 or
 
-```
-yarn build
+```terminal
+php pherger --min
 ```
 
-to bundle your application
+to build the minified version
