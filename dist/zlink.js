@@ -43,39 +43,148 @@ class Cookie {
     }
 }
 class Elm {
+    el = undefined;
     constructor(e = undefined) {
         if (e !== undefined) {
-            this.e = document.createElement(e);
+            this.el = document.createElement(e);
         }
 
         this.byId = (id) => {
-            this.e = document.getElementById(id);
+            this.el = document.getElementById(id);
+            if (this.el === null) {
+                console.error(`Element with id ${id} not found!`);
+            }
 
             return this;
         }
         this.byClass = (className) => {
-            this.e = document.getElementsByClassName(className);
-
-            return this.e;
+            return document.getElementsByClassName(className);
         }
         this.text = (text) => {
-            this.e.append(document.createTextNode(text));
+            this.el.append(document.createTextNode(text));
 
             return this;
         }
         this.append = (el) => {
-            this.e.appendChild(el);
+            this.el.appendChild(el);
 
             return this;
         }
 
         this.classes = () => {
-            return this.e.classList;
+            return this.el.classList;
         }
 
         return this;
     }
 
+}
+class Form {
+    form = undefined;
+    valid = [false];
+    validityCallback = () => {};
+    data = {};
+    constructor(name) {
+        this.form = document.querySelectorAll(`[z-form="${name}"]`)[0];
+        this.inputs = this.form.querySelectorAll('input, textarea');
+
+        // this.registerInput();
+        // this.bindValidator();
+        return this;
+    }
+    registerInput() {
+        for (let input of this.inputs) {
+            let i = new Input(input.id);
+            this.isRequired(i);
+            this.bind(i);
+        }
+    }
+    isRequired(input) {
+        if (input.hasAttribute('required')) {
+            let parent = input.parentElement;
+            let label = parent.querySelector('label');
+            label.innerHTML += ' *';
+        }
+    }
+    bind(input) {
+        input.value.observe((it) => {
+                this.data[e.target.name] = it;
+            })
+            // input.addEventListener('keyup', (e) => {
+            // console.log(e.target.value);
+            // console.log(e.target.getAttribute('z-validate'));
+            // });
+    }
+    bindValidator() {
+        for (let input of this.inputs) {
+            if (input.type == 'text' || input.type == 'password') {
+                console.log(input);
+                // vals = input.attributes['z-vals'];
+                input.addEventListener('keyup', (e) => {
+                    const validation = e.target.getAttribute('z-validate');
+                    e.target.validation = false;
+                    let ar = [];
+                    if (validation) {
+                        let arr = validation.split('&');
+                        for (let i = 0; i < arr.length; i++) {
+                            // ar.push(arr[i].split(':'));
+                            console.log(ar);
+                            switch (ar[i][0]) {
+                                case 'required':
+                                    if (e.target.value.length > 0) {
+                                        e.target.classList.remove('invalid');
+                                        e.target.classList.add('valid');
+                                        this.valid = true;
+                                    } else {
+                                        e.target.classList.remove('valid');
+                                        e.target.classList.add('invalid');
+                                        this.valid = false;
+                                    }
+                                    break;
+                                case 'min':
+                                    if (e.target.value.length >= ar[0][1]) {
+                                        e.target.classList.remove('invalid');
+                                        e.target.classList.add('valid');
+                                        this.valid = true;
+                                    } else {
+                                        e.target.classList.remove('valid');
+                                        e.target.classList.add('invalid');
+                                        this.valid = false;
+                                    }
+                                    break;
+                                case 'max':
+                                    if (e.target.value.length <= ar[0][1]) {
+                                        e.target.classList.remove('invalid');
+                                        e.target.classList.add('valid');
+                                        this.valid = true;
+                                    } else {
+                                        e.target.classList.remove('valid');
+                                        e.target.classList.add('invalid');
+                                        this.valid = false;
+                                    }
+                                    break;
+                            }
+                        }
+
+
+                        console.log(e.target.value);
+                        console.log(e.target.getAttribute('z-validate'));
+                        // this.validate(e.target);
+                    }
+                });
+                // input.addEventListener('input', (e) => {
+                //     this.valid = this.validate();
+                // });
+            }
+        }
+    }
+    isValid(callback) {
+        this.validityCallback = callback;
+        return this.validityCallback(!this.valid.includes(false));
+    }
+    data() {
+        return this.data;
+    }
 }
 class Href {
     constructor() {
@@ -136,7 +245,7 @@ class Http {
     constructor() {
         const http = new XMLHttpRequest();
 
-        this.get = (url) => {
+        this.get = async(url) => {
             return new Promise(function(resolve, reject) {
                 http.onloadend = function() {
                     var response = {
@@ -178,7 +287,7 @@ class Http {
             })
         };
 
-        this.post = (url, data) => {
+        this.post = async(url, data) => {
             return new Promise(function(resolve, reject) {
                 http.onloadend = function(response) {
                     var response = {
@@ -221,7 +330,7 @@ class Http {
             });
         };
 
-        this.put = (url, data) => {
+        this.put = async(url, data) => {
             return new Promise(function(resolve, reject) {
                 http.onloadend = function(response) {
                     var response = {
@@ -264,7 +373,7 @@ class Http {
             });
         };
 
-        this.delete = (url) => {
+        this.delete = async(url) => {
             return new Promise(function(resolve, reject) {
                 http.onloadend = function(response) {
                     var response = {
@@ -305,6 +414,80 @@ class Http {
                 http.send();
             });
         };
+    }
+}
+class Input extends Elm {
+    constructor(id) {
+        super().byId(id);
+        this.valid = new LiveData(false);
+        this.value = new LiveData();
+
+        this.isRequired();
+        this.bind();
+        return this;
+    }
+    setLiveData(ld) {
+        this.value = ld;
+        this.el.value = ld.getValue();
+        if (ld.getValue() != undefined) {
+            M.updateTextFields();
+        }
+    }
+
+    isRequired() {
+        if (this.el.hasAttribute('required')) {
+            let parent = this.el.parentElement;
+            let label = parent.querySelector('label');
+            label.innerHTML += ' *';
+        }
+    }
+
+    bind() {
+        this.el.addEventListener('keyup', (e) => {
+            this.value.postValue(e.target.value);
+            M.updateTextFields();
+        });
+        this.el.addEventListener('keydown', (e) => {
+            this.value.postValue(e.target.value);
+        });
+    }
+}
+class LiveData {
+    value = undefined;
+
+    constructor(initialValue = undefined) {
+        this.value = initialValue;
+        this.observers = new Set();
+
+        return this;
+    }
+    getValue() {
+        return this.value;
+    }
+    setValue = (newValue) => {
+        this.value = newValue;
+        this.notify();
+    }
+    postValue = (newValue) => {
+        this.value = newValue;
+        this.notify();
+    }
+    hasObservers = () => {
+        return this.observers.size > 0;
+    }
+    async observe(observer) {
+        this.observers.add(observer);
+        this.notify();
+    }
+
+    notify() {
+        if (this.hasObservers()) {
+            for (let observer of this.observers) {
+                if (this.value !== undefined && this.value !== null) {
+                    observer(this.value);
+                }
+            }
+        }
     }
 }
 class Materialize {
@@ -386,14 +569,16 @@ class Toast {
 }
 class App {
     load() {
-        $.getScript("https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js", (Materialize) => {
+        $.getScript("https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/js/materialize.min.js", (Materialize) => {
             eval(Materialize);
             console.log("Materialize " + M.version + " loaded!");
         });
     }
-    onloaded() {
+    DOMContentLoaded(f = undefined) {
         window.addEventListener('DOMContentLoaded', () => {
             M.AutoInit();
+            this.bind();
+            if (f) f();
         });
     }
     constructor(name) {
@@ -405,18 +590,36 @@ class App {
         this.mat = new Materialize(this.el);
         this.storage = new Storage();
 
+        this.DOMContentLoaded();
         return this;
+    }
+    form(name) {
+        return new Form(name);
     }
 
     toast(msg) {
         return new Toast(msg, undefined, this.storage)
     };
 
-    elm(e = undefined) {
-        return new Elm(e);
-    };
+    elm = new Elm();
 
     reload(delay = 0) {
         setTimeout(() => { location.reload() }, delay);
     };
+    findLiveData(name) {
+        return (function(name) { return globalThis[name] }).call(null, name);
+    }
+    bind() {
+        this.inputElements = document.querySelectorAll('[z-live]');
+        for (let el of this.inputElements) {
+            let ld = this.findLiveData(el.getAttribute('z-live'));
+            if (ld != undefined) {
+                let input = new Input(el.id);
+                input.setLiveData(ld);
+                ld.observe((it) => {
+                    input.el.value = it;
+                });
+            }
+        }
+    }
 }

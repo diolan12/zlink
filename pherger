@@ -12,8 +12,12 @@ function parseArgs($argv)
     $phpCompilerConfig = file_get_contents("pgconfig.json");
 
     $config = json_decode($phpCompilerConfig);
+    $config->watch = false;
     foreach ($argv as $v) {
         switch ($v) {
+            case '--watch':
+                $config->watch = true;
+                break;
             case '--min':
                 $config->minify = true;
                 break;

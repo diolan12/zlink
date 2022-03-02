@@ -2,7 +2,7 @@ class Http {
     constructor() {
         const http = new XMLHttpRequest();
 
-        this.get = (url) => {
+        this.get = async(url) => {
             return new Promise(function(resolve, reject) {
                 http.onloadend = function() {
                     var response = {
@@ -44,7 +44,7 @@ class Http {
             })
         };
 
-        this.post = (url, data) => {
+        this.post = async(url, data) => {
             return new Promise(function(resolve, reject) {
                 http.onloadend = function(response) {
                     var response = {
@@ -87,7 +87,7 @@ class Http {
             });
         };
 
-        this.put = (url, data) => {
+        this.put = async(url, data) => {
             return new Promise(function(resolve, reject) {
                 http.onloadend = function(response) {
                     var response = {
@@ -130,7 +130,7 @@ class Http {
             });
         };
 
-        this.delete = (url) => {
+        this.delete = async(url) => {
             return new Promise(function(resolve, reject) {
                 http.onloadend = function(response) {
                     var response = {

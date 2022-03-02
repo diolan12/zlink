@@ -1,32 +1,34 @@
 class Elm {
+    el = undefined;
     constructor(e = undefined) {
         if (e !== undefined) {
-            this.e = document.createElement(e);
+            this.el = document.createElement(e);
         }
 
         this.byId = (id) => {
-            this.e = document.getElementById(id);
+            this.el = document.getElementById(id);
+            if (this.el === null) {
+                console.error(`Element with id ${id} not found!`);
+            }
 
             return this;
         }
         this.byClass = (className) => {
-            this.e = document.getElementsByClassName(className);
-
-            return this.e;
+            return document.getElementsByClassName(className);
         }
         this.text = (text) => {
-            this.e.append(document.createTextNode(text));
+            this.el.append(document.createTextNode(text));
 
             return this;
         }
         this.append = (el) => {
-            this.e.appendChild(el);
+            this.el.appendChild(el);
 
             return this;
         }
 
         this.classes = () => {
-            return this.e.classList;
+            return this.el.classList;
         }
 
         return this;
