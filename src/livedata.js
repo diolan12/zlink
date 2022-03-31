@@ -10,20 +10,25 @@ class LiveData {
     getValue() {
         return this.value;
     }
-    setValue = (newValue) => {
+    setValue(newValue) {
         this.value = newValue;
         this.notify();
     }
-    postValue = (newValue) => {
+    postValue(newValue) {
         this.value = newValue;
         this.notify();
     }
-    hasObservers = () => {
+    hasObservers() {
         return this.observers.size > 0;
+    }
+    removeObservers() {
+        this.observers = new Set();
     }
     async observe(observer) {
         this.observers.add(observer);
-        this.notify();
+        if (this.value !== undefined && this.value !== null) {
+            observer(this.value);
+        }
     }
 
     notify() {

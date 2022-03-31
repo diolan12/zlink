@@ -6,21 +6,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Zlink</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <!--Import Google Icon Font-->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
     <!-- Compiled and minified CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/css/materialize.min.css">
 
     <!-- Compiled and minified JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/js/materialize.min.js"></script>
-    <script src="/dist/zlink.js"></script>
+    <!-- <script src="/dist/zlink.js"></script> -->
+    <script src="/src/cookie.js"></script>
+    <script src="/src/form.js"></script>
+    <script src="/src/href.js"></script>
+    <script src="/src/http.js"></script>
+    <script src="/src/lmn.js"></script>
+    <script src="/src/livedata.js"></script>
+    <script src="/src/input.js"></script>
+    <script src="/src/log.js"></script>
+    <script src="/src/materialize.js"></script>
+    <script src="/src/modal.js"></script>
+    <script src="/src/storage.js"></script>
+    <script src="/src/toast.js"></script>
 
+    <script src="/src/index.js"></script>
 </head>
 
 <body>
     <script>
-        const app = new App('Zlink Demo');
-        console.log(app);
+        const config = {
+            debug: true,
+            M: "https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/js/materialize.min.js",
+            scripts: [
+                "http", "cookie"
+            ]
+        };
+        // const z = new Zlink('Zlink Demo');
+        const z = new Zlink('Zlink Demo', config);
+        console.log(z);
     </script>
     <header></header>
     <main>
@@ -37,7 +59,7 @@
                                         <label for="login-username">Username</label>
                                     </div>
                                     <div class="input-field col s12">
-                                        <input id="login-password" name="password" type="password" z-live="password" data-length="16">
+                                        <input id="login-password" name="password" type="password" required z-live="password" data-length="16">
                                         <label for="login-password" z-bind="password">Password</label>
                                     </div>
                                 </div>
@@ -56,12 +78,14 @@
                                 <span class="card-title">Register</span>
                                 <div class="row">
                                     <div class="input-field col s12">
-                                        <input id="register-username" name="username" type="text" z-live="username" required z-validate="min: 3 & max: 6" >
+                                        <input id="register-username" name="username" class="validate" type="text" z-live="username" required z-validate="min: 3 & max: 6">
                                         <label for="register-username">Username</label>
+                                        <span class="helper-text" data-error="wrong" data-success="right">Helper text</span>
                                     </div>
                                     <div class="input-field col s12">
-                                        <input id="register-password" name="password" type="password" z-live="password" data-length="16">
-                                        <label for="register-password" z-bind="password">Password</label>
+                                        <input id="register-password" name="password" type="password" required z-live="password" data-length="16">
+                                        <label for="register-password">Password</label>
+                                        <span class="helper-text" data-error="wrong" data-success="right">Helper text</span>
                                     </div>
                                 </div>
                             </div>
@@ -101,7 +125,7 @@
 
         password = new LiveData('password');
         password.observe((it) => {
-            console.log(`observe password: ${it}`);
+            console.info(`observe password: ${it}`);
             // app.elm.byId('register-password').value = it;
             // document.getElementById('login-password').value = it;
         });
@@ -122,13 +146,13 @@
             // console.log(form.data());
         }
 
-        post = app.elm.byId('post');
+        // post = z.elm.byId('post');
         // console.log(post);
         // console.log(post.classes());
         // console.log(post.classes().add('teal'));
         // console.log(post.classes());
 
-        text = new Elm('P');
+        // text = new Elm().create('P');
         // console.log(text);
 
 

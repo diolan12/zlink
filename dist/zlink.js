@@ -42,43 +42,6 @@ class Cookie {
         return JSON.stringify({ key: this.key, value: this.value });
     }
 }
-class Elm {
-    el = undefined;
-    constructor(e = undefined) {
-        if (e !== undefined) {
-            this.el = document.createElement(e);
-        }
-
-        this.byId = (id) => {
-            this.el = document.getElementById(id);
-            if (this.el === null) {
-                console.error(`Element with id ${id} not found!`);
-            }
-
-            return this;
-        }
-        this.byClass = (className) => {
-            return document.getElementsByClassName(className);
-        }
-        this.text = (text) => {
-            this.el.append(document.createTextNode(text));
-
-            return this;
-        }
-        this.append = (el) => {
-            this.el.appendChild(el);
-
-            return this;
-        }
-
-        this.classes = () => {
-            return this.el.classList;
-        }
-
-        return this;
-    }
-
-}
 class Form {
     form = undefined;
     valid = [false];
@@ -416,39 +379,103 @@ class Http {
         };
     }
 }
-class Input extends Elm {
-    constructor(id) {
-        super().byId(id);
-        this.valid = new LiveData(false);
+class Input extends Lmn {
+    constructor(e) {
+        super(e);
+        this.valid = new LiveData(null);
         this.value = new LiveData();
 
-        this.isRequired();
+        this.parent = this.el.parentElement;
+        this.input = this.el;
+        this.label = this.parent.querySelector('label');
+
+        this.helper = this.parent.querySelector('span');
+        this.originalHelperText = this.helper ? this.helper.innerHTML : null;
+        console.log(this.originalHelperText);
+
         this.bind();
+        this.update();
         return this;
+    }
+    update() {
+        M.updateTextFields();
+        this.isRequired();
+        this.isValidated();
     }
     setLiveData(ld) {
         this.value = ld;
-        this.el.value = ld.getValue();
+        this.input.value = ld.getValue();
         if (ld.getValue() != undefined) {
-            M.updateTextFields();
+            this.update();
+        }
+    }
+    setValid(message = "") {
+        this.input.classList.add('valid');
+        this.input.classList.remove('invalid');
+        if (this.helper != null) {
+            this.helper.innerHTML = message;
+        }
+    }
+    setInvalid(message = "") {
+        this.input.classList.remove('valid');
+        this.input.classList.add('invalid');
+        if (this.helper != null) {
+            this.helper.innerHTML = message;
         }
     }
 
     isRequired() {
-        if (this.el.hasAttribute('required')) {
-            let parent = this.el.parentElement;
-            let label = parent.querySelector('label');
-            label.innerHTML += ' *';
+        if (this.input.hasAttribute('required')) {
+            if (!this.label.innerText.includes('*')) {
+                this.label.innerHTML += ' *';
+            }
+        }
+    }
+    isValidated() {
+        if (this.input.hasAttribute('z-validate')) {
+            this.input.classList.add('validation');
+            this.valid.observe((it) => {
+                console.log(it);
+                if (it) {
+                    this.setValid();
+                } else {
+                    this.setInvalid();
+                }
+            })
+            this.rules = this.input.getAttribute('z-validate').split('&');
+            console.log(this.rules);
+        }
+    }
+    validate(newValue) {
+        for (let rule of this.rules) {
+            console.log(rule);
+            key = rule.split(':')[0];
+            value = rule.split(':')[1];
+            switch (key) {
+                case 'min':
+                    this.valid.postValue(newValue.length < value);
+                    break;
+                case 'max':
+                    this.valid.postValue(newValue.length > value);
+                    break;
+            }
         }
     }
 
+    postNecessary(newValue) {
+        if (this.value.getValue() != newValue) {
+            this.value.postValue(newValue);
+            this.validate(newValue);
+        }
+    }
     bind() {
-        this.el.addEventListener('keyup', (e) => {
-            this.value.postValue(e.target.value);
-            M.updateTextFields();
+        this.input.addEventListener('keyup', (e) => {
+            this.postNecessary(e.target.value);
+            this.update();
         });
-        this.el.addEventListener('keydown', (e) => {
-            this.value.postValue(e.target.value);
+        this.input.addEventListener('keydown', (e) => {
+            this.postNecessary(e.target.value);
+            this.update();
         });
     }
 }
@@ -464,20 +491,25 @@ class LiveData {
     getValue() {
         return this.value;
     }
-    setValue = (newValue) => {
+    setValue(newValue) {
         this.value = newValue;
         this.notify();
     }
-    postValue = (newValue) => {
+    postValue(newValue) {
         this.value = newValue;
         this.notify();
     }
-    hasObservers = () => {
+    hasObservers() {
         return this.observers.size > 0;
+    }
+    removeObservers() {
+        this.observers = new Set();
     }
     async observe(observer) {
         this.observers.add(observer);
-        this.notify();
+        if (this.value !== undefined && this.value !== null) {
+            observer(this.value);
+        }
     }
 
     notify() {
@@ -487,6 +519,68 @@ class LiveData {
                     observer(this.value);
                 }
             }
+        }
+    }
+}
+class Lmn {
+    el = undefined;
+    /** 
+     * @param {Element} e 
+     * @param {string} value
+     * @returns {Lmn}
+     */
+    constructor(e = undefined) {
+        if (e !== undefined) {
+            this.el = e;
+        }
+        return this;
+    }
+    create(e) {
+        this.el = document.createElement(e);
+        return this;
+    }
+    byId(id) {
+        this.el = document.getElementById(id);
+        if (this.el === null) {
+            throw (`Element with id ${id} not found!`);
+        }
+
+        return this;
+    }
+    byClass(className) {
+        return document.getElementsByClassName(className);
+    }
+    text(text) {
+        this.el.append(document.createTextNode(text));
+
+        return this;
+    }
+    append(el) {
+        this.el.appendChild(el);
+
+        return this;
+    }
+
+    classes() {
+        return this.el.classList;
+    }
+}
+class Log {
+    constructor(message = null, debug = false) {
+        this.debug = debug;
+        if (message !== null && this.debug) {}
+        return console.log.bind(window.console);
+    }
+
+    warn(message) {
+        if (this.debug) {
+            console.warn(message);
+        }
+    }
+
+    error(message) {
+        if (this.debug) {
+            return () => { console.error(message); };
         }
     }
 }
@@ -567,12 +661,28 @@ class Toast {
     }
 
 }
-class App {
+class Zlink {
+    version = '1.0.0-alpha';
+    config = {
+        debug: false,
+        M: "https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/js/materialize.min.js",
+        scripts: [
+            "http", "cookie"
+        ]
+    };
     load() {
-        $.getScript("https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/js/materialize.min.js", (Materialize) => {
-            eval(Materialize);
-            console.log("Materialize " + M.version + " loaded!");
-        });
+        try {
+            $.getScript(this.config.M, (Materialize) => {
+                eval(Materialize);
+                new Log("Materialize " + M.version + " loaded!");
+            });
+        } catch (error) {
+            if (error.message == '$ is not defined') {
+                console.error("JQuery is not loaded");
+            } else {
+                console.error(error.message);
+            }
+        }
     }
     DOMContentLoaded(f = undefined) {
         window.addEventListener('DOMContentLoaded', () => {
@@ -581,7 +691,16 @@ class App {
             if (f) f();
         });
     }
-    constructor(name) {
+    constructor(name, config = undefined) {
+        if (config != undefined) {
+            this.config = config;
+        }
+        console.log = this.config.debug ? console.log : () => {};
+        console.info = this.config.debug ? console.info : () => {};
+        console.warn = this.config.debug ? console.warn : () => {};
+        console.error = this.config.debug ? console.error : () => {};
+        this.load();
+
         this.name = name;
         this.cookie = new Cookie();
 
@@ -601,7 +720,8 @@ class App {
         return new Toast(msg, undefined, this.storage)
     };
 
-    elm = new Elm();
+    lmn = new Lmn();
+
 
     reload(delay = 0) {
         setTimeout(() => { location.reload() }, delay);
@@ -610,15 +730,26 @@ class App {
         return (function(name) { return globalThis[name] }).call(null, name);
     }
     bind() {
-        this.inputElements = document.querySelectorAll('[z-live]');
-        for (let el of this.inputElements) {
+        this.liveElements = document.querySelectorAll('[z-live]');
+        this.bindElements = document.querySelectorAll('[z-bind]');
+        for (let el of this.liveElements) {
             let ld = this.findLiveData(el.getAttribute('z-live'));
             if (ld != undefined) {
-                let input = new Input(el.id);
+                let input = new Input(el);
                 input.setLiveData(ld);
                 ld.observe((it) => {
                     input.el.value = it;
+                    input.update();
                 });
+            }
+        }
+
+        for (let el of this.bindElements) {
+            let ld = this.findLiveData(el.getAttribute('z-bind'));
+            if (ld != undefined) {
+                ld.observe((it) => {
+                    el.innerHTML = it;
+                })
             }
         }
     }
