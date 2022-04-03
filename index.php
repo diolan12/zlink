@@ -104,9 +104,16 @@
         username = new LiveData('exxample12');
         // console.log(this);
         username.observe((it) => {
-            console.log(`observe username: ${it}`);
+            console.log(`observe default: ${it}`);
+            // console.log(`calling rest api: ${it}`);
             // app.elm.byId('register-username').value = it;
             // document.getElementById('login-username').value = it;
+        });
+        username.debounceObserve((it) => {
+            console.log(`observe debounce: ${it}`);
+        });
+        username.throttleObserve((it) => {
+            console.log(`observe throttle: ${it}`);
         });
         // username.observe((it) => {
         //     // app.elm.byId('register-username').value = it;
