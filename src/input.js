@@ -10,7 +10,7 @@ class Input extends Lmn {
 
         this.helper = this.parent.querySelector('span');
         this.originalHelperText = this.helper ? this.helper.innerHTML : null;
-        console.log(this.originalHelperText);
+        // console.log(this.originalHelperText);
 
         this.bind();
         this.update();
@@ -54,7 +54,7 @@ class Input extends Lmn {
         if (this.input.hasAttribute('z-validate')) {
             this.input.classList.add('validation');
             this.valid.observe((it) => {
-                console.log(it);
+                // console.log(it);
                 if (it) {
                     this.setValid();
                 } else {
@@ -62,23 +62,23 @@ class Input extends Lmn {
                 }
             })
             this.rules = this.input.getAttribute('z-validate').split('&');
-            console.log(this.rules);
+            // console.log(this.rules);
         }
     }
     validate(newValue) {
-        for (let rule of this.rules) {
-            console.log(rule);
-            key = rule.split(':')[0];
-            value = rule.split(':')[1];
-            switch (key) {
-                case 'min':
-                    this.valid.postValue(newValue.length < value);
-                    break;
-                case 'max':
-                    this.valid.postValue(newValue.length > value);
-                    break;
-            }
-        }
+        // for (let rule of this.rules) {
+        //     console.log(rule);
+        //     key = rule.split(':')[0];
+        //     value = rule.split(':')[1];
+        //     switch (key) {
+        //         case 'min':
+        //             this.valid.postValue(newValue.length < value);
+        //             break;
+        //         case 'max':
+        //             this.valid.postValue(newValue.length > value);
+        //             break;
+        //     }
+        // }
     }
 
     postNecessary(newValue) {
@@ -88,13 +88,17 @@ class Input extends Lmn {
         }
     }
     bind() {
-        this.input.addEventListener('keyup', (e) => {
+        this.input.addEventListener('input', (e) => {
             this.postNecessary(e.target.value);
             this.update();
         });
-        this.input.addEventListener('keydown', (e) => {
-            this.postNecessary(e.target.value);
-            this.update();
-        });
+        // this.input.addEventListener('keyup', (e) => {
+        //     this.postNecessary(e.target.value);
+        //     this.update();
+        // });
+        // this.input.addEventListener('keydown', (e) => {
+        //     this.postNecessary(e.target.value);
+        //     this.update();
+        // });
     }
 }
