@@ -391,7 +391,7 @@ class Input extends Lmn {
 
         this.helper = this.parent.querySelector('span');
         this.originalHelperText = this.helper ? this.helper.innerHTML : null;
-        console.log(this.originalHelperText);
+        // console.log(this.originalHelperText);
 
         this.bind();
         this.update();
@@ -402,7 +402,7 @@ class Input extends Lmn {
         this.isRequired();
         this.isValidated();
     }
-    setLiveData(ld) {
+    bindLiveData(ld) {
         this.value = ld;
         this.input.value = ld.getValue();
         if (ld.getValue() != undefined) {
@@ -435,7 +435,7 @@ class Input extends Lmn {
         if (this.input.hasAttribute('z-validate')) {
             this.input.classList.add('validation');
             this.valid.observe((it) => {
-                console.log(it);
+                // console.log(it);
                 if (it) {
                     this.setValid();
                 } else {
@@ -443,23 +443,23 @@ class Input extends Lmn {
                 }
             })
             this.rules = this.input.getAttribute('z-validate').split('&');
-            console.log(this.rules);
+            // console.log(this.rules);
         }
     }
     validate(newValue) {
-        for (let rule of this.rules) {
-            console.log(rule);
-            key = rule.split(':')[0];
-            value = rule.split(':')[1];
-            switch (key) {
-                case 'min':
-                    this.valid.postValue(newValue.length < value);
-                    break;
-                case 'max':
-                    this.valid.postValue(newValue.length > value);
-                    break;
-            }
-        }
+        // for (let rule of this.rules) {
+        //     console.log(rule);
+        //     key = rule.split(':')[0];
+        //     value = rule.split(':')[1];
+        //     switch (key) {
+        //         case 'min':
+        //             this.valid.postValue(newValue.length < value);
+        //             break;
+        //         case 'max':
+        //             this.valid.postValue(newValue.length > value);
+        //             break;
+        //     }
+        // }
     }
 
     postNecessary(newValue) {
@@ -469,14 +469,18 @@ class Input extends Lmn {
         }
     }
     bind() {
-        this.input.addEventListener('keyup', (e) => {
+        this.input.addEventListener('input', (e) => {
             this.postNecessary(e.target.value);
             this.update();
         });
-        this.input.addEventListener('keydown', (e) => {
-            this.postNecessary(e.target.value);
-            this.update();
-        });
+        // this.input.addEventListener('keyup', (e) => {
+        //     this.postNecessary(e.target.value);
+        //     this.update();
+        // });
+        // this.input.addEventListener('keydown', (e) => {
+        //     this.postNecessary(e.target.value);
+        //     this.update();
+        // });
     }
 }
 class LiveData {
@@ -507,9 +511,46 @@ class LiveData {
     }
     async observe(observer) {
         this.observers.add(observer);
-        if (this.value !== undefined && this.value !== null) {
-            observer(this.value);
-        }
+    }
+    async debounceObserve(observer, delay = 800) {
+        this.observers.add((() => {
+            let timeout
+
+            return (...args) => {
+                clearTimeout(timeout)
+                timeout = setTimeout(() => {
+                    observer(...args)
+                }, delay)
+            }
+        })());
+    }
+    async throttleObserve(observer, delay = 300) {
+        // this.observers.add(this.throttle(observer, delay));
+        this.observers.add((() => {
+            let shouldWait = false
+            let waitingArgs
+            const timeoutFunction = () => {
+                if (waitingArgs == undefined) {
+                    shouldWait = false
+                } else {
+                    observer(...waitingArgs)
+                    waitingArgs = undefined
+                    setTimeout(timeoutFunction, delay)
+                }
+            }
+
+            return (...args) => {
+                if (shouldWait) {
+                    waitingArgs = args
+                    return
+                }
+
+                observer(...args)
+                shouldWait = true
+
+                setTimeout(timeoutFunction, delay)
+            }
+        })());
     }
 
     notify() {
@@ -519,6 +560,41 @@ class LiveData {
                     observer(this.value);
                 }
             }
+        }
+    }
+    debounce(cb, delay) {
+        let timeout
+
+        return (...args) => {
+            clearTimeout(timeout)
+            timeout = setTimeout(() => {
+                cb(...args)
+            }, delay)
+        }
+    }
+    throttle(cb, delay) {
+        let shouldWait = false
+        let waitingArgs
+        const timeoutFunction = () => {
+            if (waitingArgs == undefined) {
+                shouldWait = false
+            } else {
+                cb(...waitingArgs)
+                waitingArgs = undefined
+                setTimeout(timeoutFunction, delay)
+            }
+        }
+
+        return (...args) => {
+            if (shouldWait) {
+                waitingArgs = args
+                return
+            }
+
+            cb(...args)
+            shouldWait = true
+
+            setTimeout(timeoutFunction, delay)
         }
     }
 }
@@ -730,24 +806,71 @@ class Zlink {
         return (function(name) { return globalThis[name] }).call(null, name);
     }
     bind() {
-        this.liveElements = document.querySelectorAll('[z-live]');
         this.bindElements = document.querySelectorAll('[z-bind]');
-        for (let el of this.liveElements) {
-            let ld = this.findLiveData(el.getAttribute('z-live'));
+        this.bindDebounceElements = document.querySelectorAll('[z-bind-debounce]');
+        this.bindThrottleElements = document.querySelectorAll('[z-bind-throttle]');
+
+        this.liveElements = document.querySelectorAll('[z-live]');
+        this.liveDebounceElements = document.querySelectorAll('[z-live-debounce]');
+        this.liveThrottleElements = document.querySelectorAll('[z-live-throttle]');
+
+        for (let el of this.bindElements) {
+            let ld = this.findLiveData(el.getAttribute('z-bind'));
             if (ld != undefined) {
                 let input = new Input(el);
-                input.setLiveData(ld);
+                input.bindLiveData(ld);
                 ld.observe((it) => {
                     input.el.value = it;
                     input.update();
                 });
             }
         }
-
-        for (let el of this.bindElements) {
-            let ld = this.findLiveData(el.getAttribute('z-bind'));
+        for (let el of this.bindDebounceElements) {
+            let ld = this.findLiveData(el.getAttribute('z-bind-debounce'));
             if (ld != undefined) {
+                let input = new Input(el);
+                input.bindLiveData(ld);
+                ld.debounceObserve((it) => {
+                    input.el.value = it;
+                    input.update();
+                });
+            }
+        }
+        for (let el of this.bindThrottleElements) {
+            let ld = this.findLiveData(el.getAttribute('z-bind-throttle'));
+            if (ld != undefined) {
+                let input = new Input(el);
+                input.bindLiveData(ld);
+                ld.throttleObserve((it) => {
+                    input.el.value = it;
+                    input.update();
+                });
+            }
+        }
+
+        for (let el of this.liveElements) {
+            let ld = this.findLiveData(el.getAttribute('z-live'));
+            if (ld != undefined) {
+                el.innerHTML = ld.getValue();
                 ld.observe((it) => {
+                    el.innerHTML = it;
+                })
+            }
+        }
+        for (let el of this.liveDebounceElements) {
+            let ld = this.findLiveData(el.getAttribute('z-live-debounce'));
+            if (ld != undefined) {
+                el.innerHTML = ld.getValue();
+                ld.debounceObserve((it) => {
+                    el.innerHTML = it;
+                })
+            }
+        }
+        for (let el of this.liveThrottleElements) {
+            let ld = this.findLiveData(el.getAttribute('z-live-throttle'));
+            if (ld != undefined) {
+                el.innerHTML = ld.getValue();
+                ld.throttleObserve((it) => {
                     el.innerHTML = it;
                 })
             }

@@ -67,24 +67,71 @@ class Zlink {
         return (function(name) { return globalThis[name] }).call(null, name);
     }
     bind() {
-        this.liveElements = document.querySelectorAll('[z-live]');
         this.bindElements = document.querySelectorAll('[z-bind]');
-        for (let el of this.liveElements) {
-            let ld = this.findLiveData(el.getAttribute('z-live'));
+        this.bindDebounceElements = document.querySelectorAll('[z-bind-debounce]');
+        this.bindThrottleElements = document.querySelectorAll('[z-bind-throttle]');
+
+        this.liveElements = document.querySelectorAll('[z-live]');
+        this.liveDebounceElements = document.querySelectorAll('[z-live-debounce]');
+        this.liveThrottleElements = document.querySelectorAll('[z-live-throttle]');
+
+        for (let el of this.bindElements) {
+            let ld = this.findLiveData(el.getAttribute('z-bind'));
             if (ld != undefined) {
                 let input = new Input(el);
-                input.setLiveData(ld);
+                input.bindLiveData(ld);
                 ld.observe((it) => {
                     input.el.value = it;
                     input.update();
                 });
             }
         }
-
-        for (let el of this.bindElements) {
-            let ld = this.findLiveData(el.getAttribute('z-bind'));
+        for (let el of this.bindDebounceElements) {
+            let ld = this.findLiveData(el.getAttribute('z-bind-debounce'));
             if (ld != undefined) {
+                let input = new Input(el);
+                input.bindLiveData(ld);
+                ld.debounceObserve((it) => {
+                    input.el.value = it;
+                    input.update();
+                });
+            }
+        }
+        for (let el of this.bindThrottleElements) {
+            let ld = this.findLiveData(el.getAttribute('z-bind-throttle'));
+            if (ld != undefined) {
+                let input = new Input(el);
+                input.bindLiveData(ld);
+                ld.throttleObserve((it) => {
+                    input.el.value = it;
+                    input.update();
+                });
+            }
+        }
+
+        for (let el of this.liveElements) {
+            let ld = this.findLiveData(el.getAttribute('z-live'));
+            if (ld != undefined) {
+                el.innerHTML = ld.getValue();
                 ld.observe((it) => {
+                    el.innerHTML = it;
+                })
+            }
+        }
+        for (let el of this.liveDebounceElements) {
+            let ld = this.findLiveData(el.getAttribute('z-live-debounce'));
+            if (ld != undefined) {
+                el.innerHTML = ld.getValue();
+                ld.debounceObserve((it) => {
+                    el.innerHTML = it;
+                })
+            }
+        }
+        for (let el of this.liveThrottleElements) {
+            let ld = this.findLiveData(el.getAttribute('z-live-throttle'));
+            if (ld != undefined) {
+                el.innerHTML = ld.getValue();
+                ld.throttleObserve((it) => {
                     el.innerHTML = it;
                 })
             }

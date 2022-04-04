@@ -8,12 +8,13 @@
     <title>Zlink</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <!--Import Google Icon Font-->
-    <!-- <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- Compiled and minified CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/css/materialize.min.css">
 
     <!-- Compiled and minified JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/@materializecss/materialize@1.1.0-alpha/dist/js/materialize.min.js"></script>
+
     <!-- <script src="/dist/zlink.js"></script> -->
     <script src="/src/cookie.js"></script>
     <script src="/src/form.js"></script>
@@ -48,73 +49,18 @@
     <main>
         <div class="container">
             <div class="row">
-                <div class="col s12 m6" data-list="posts">
-                    <div class="card">
-                        <form z-form="login">
-                            <div class="card-content">
-                                <span class="card-title">Login</span>
-                                <div class="row">
-                                    <div class="input-field col s12">
-                                        <input id="login-username" name="username" type="text" required z-validate="min: 3 & max: 6" z-live="username">
-                                        <label for="login-username">Username</label>
-                                    </div>
-                                    <div class="input-field col s12">
-                                        <input id="login-password" name="password" type="password" required z-live="password" data-length="16">
-                                        <label for="login-password" z-bind="password">Password</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-action right-align">
-                                <a href="#">Register</a>
-                                <a onclick="getData()" href="#" class="submit">Login</a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <div id="post" class="col s12 m6" data-list="posts">
-                    <div class="card">
-                        <form z-form="register">
-                            <div class="card-content">
-                                <span class="card-title">Register</span>
-                                <div class="row">
-                                    <div class="input-field col s12">
-                                        <input id="register-username" name="username" class="validate" type="text" z-live="username" required z-validate="min: 3 & max: 6">
-                                        <label for="register-username">Username</label>
-                                        <span class="helper-text" data-error="wrong" data-success="right">Helper text</span>
-                                    </div>
-                                    <div class="input-field col s12">
-                                        <input id="register-password" name="password" type="password" required z-live="password" data-length="16">
-                                        <label for="register-password">Password</label>
-                                        <span class="helper-text" data-error="wrong" data-success="right">Helper text</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-action right-align">
-                                <a href="#">Register</a>
-                                <a onclick="getData()" href="#" class="submit">Login</a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <?php
+                include_once('page/binding.php');
+                include_once('page/autocomplete.php');
+                include_once('page/textfield.php');
+                ?>
+                
             </div>
         </div>
     </main>
     <footer></footer>
     <script>
-        username = new LiveData('exxample12');
-        // console.log(this);
-        username.observe((it) => {
-            console.log(`observe default: ${it}`);
-            // console.log(`calling rest api: ${it}`);
-            // app.elm.byId('register-username').value = it;
-            // document.getElementById('login-username').value = it;
-        });
-        username.debounceObserve((it) => {
-            console.log(`observe debounce: ${it}`);
-        });
-        username.throttleObserve((it) => {
-            console.log(`observe throttle: ${it}`);
-        });
+        
         // username.observe((it) => {
         //     // app.elm.byId('register-username').value = it;
         //     document.getElementById('register-username').value = it;

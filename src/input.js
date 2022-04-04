@@ -21,7 +21,7 @@ class Input extends Lmn {
         this.isRequired();
         this.isValidated();
     }
-    setLiveData(ld) {
+    bindLiveData(ld) {
         this.value = ld;
         this.input.value = ld.getValue();
         if (ld.getValue() != undefined) {
