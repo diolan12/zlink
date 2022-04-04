@@ -1,5 +1,5 @@
 class LiveData {
-    value = undefined;
+    value;
 
     constructor(initialValue = undefined) {
         this.value = initialValue;
@@ -12,7 +12,6 @@ class LiveData {
     }
     setValue(newValue) {
         this.value = newValue;
-        this.notify();
     }
     postValue(newValue) {
         this.value = newValue;

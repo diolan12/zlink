@@ -1,4 +1,4 @@
-class Lmn {
+class Elmn {
     el = undefined;
     /** 
      * @param {Element} e 

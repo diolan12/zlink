@@ -42,6 +42,49 @@ class Cookie {
         return JSON.stringify({ key: this.key, value: this.value });
     }
 }
+class Elmn {
+    el = undefined;
+    /** 
+     * @param {Element} e 
+     * @param {string} value
+     * @returns {Lmn}
+     */
+    constructor(e = undefined) {
+        if (e !== undefined) {
+            this.el = e;
+        }
+        return this;
+    }
+    create(e) {
+        this.el = document.createElement(e);
+        return this;
+    }
+    byId(id) {
+        this.el = document.getElementById(id);
+        if (this.el === null) {
+            throw (`Element with id ${id} not found!`);
+        }
+
+        return this;
+    }
+    byClass(className) {
+        return document.getElementsByClassName(className);
+    }
+    text(text) {
+        this.el.append(document.createTextNode(text));
+
+        return this;
+    }
+    append(el) {
+        this.el.appendChild(el);
+
+        return this;
+    }
+
+    classes() {
+        return this.el.classList;
+    }
+}
 class Form {
     form = undefined;
     valid = [false];
@@ -379,7 +422,7 @@ class Http {
         };
     }
 }
-class Input extends Lmn {
+class Input extends Elmn {
     constructor(e) {
         super(e);
         this.valid = new LiveData(null);
@@ -404,8 +447,9 @@ class Input extends Lmn {
     }
     bindLiveData(ld) {
         this.value = ld;
-        this.input.value = ld.getValue();
-        if (ld.getValue() != undefined) {
+        if (ld.getValue() != undefined && ld.getValue() != null) {
+            console.log(ld.getValue());
+            this.input.value = ld.getValue();
             this.update();
         }
     }
@@ -484,7 +528,7 @@ class Input extends Lmn {
     }
 }
 class LiveData {
-    value = undefined;
+    value;
 
     constructor(initialValue = undefined) {
         this.value = initialValue;
@@ -596,49 +640,6 @@ class LiveData {
 
             setTimeout(timeoutFunction, delay)
         }
-    }
-}
-class Lmn {
-    el = undefined;
-    /** 
-     * @param {Element} e 
-     * @param {string} value
-     * @returns {Lmn}
-     */
-    constructor(e = undefined) {
-        if (e !== undefined) {
-            this.el = e;
-        }
-        return this;
-    }
-    create(e) {
-        this.el = document.createElement(e);
-        return this;
-    }
-    byId(id) {
-        this.el = document.getElementById(id);
-        if (this.el === null) {
-            throw (`Element with id ${id} not found!`);
-        }
-
-        return this;
-    }
-    byClass(className) {
-        return document.getElementsByClassName(className);
-    }
-    text(text) {
-        this.el.append(document.createTextNode(text));
-
-        return this;
-    }
-    append(el) {
-        this.el.appendChild(el);
-
-        return this;
-    }
-
-    classes() {
-        return this.el.classList;
     }
 }
 class Log {
@@ -796,7 +797,7 @@ class Zlink {
         return new Toast(msg, undefined, this.storage)
     };
 
-    lmn = new Lmn();
+    elmn = new Elmn();
 
 
     reload(delay = 0) {
@@ -820,6 +821,7 @@ class Zlink {
                 let input = new Input(el);
                 input.bindLiveData(ld);
                 ld.observe((it) => {
+                    console.log("ahaaa");
                     input.el.value = it;
                     input.update();
                 });

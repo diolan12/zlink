@@ -57,7 +57,7 @@ class Zlink {
         return new Toast(msg, undefined, this.storage)
     };
 
-    lmn = new Lmn();
+    elmn = new Elmn();
 
 
     reload(delay = 0) {
